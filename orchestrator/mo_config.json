@@ -1,0 +1,5 @@
+{ "associations": [
+    {"mcId": "mc-1", "mcIp": "10.242.10.150", "mcMac": "INSERT MAC", "meId": "me-1", "meIp": "10.0.3.6", "technology": "5G", "mode": "REVERSE"},
+    {"mcId": "mc-2", "mcIp": "10.242.10.150", "mcMac": "INSERT MAC", "meId": "me-2", "meIp": "10.242.10.161", "technology": "WIFI", "mode": "REVERSE"}
+]
+}

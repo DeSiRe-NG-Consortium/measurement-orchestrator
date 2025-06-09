@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Setup script for DeSiRe-NG Measurement Orchestrator
+# This script is written for Debian12. Feel free to run it on any other Linux Distro, but on your own risk!
+# In case you have a fresh install, please add the official sources.d:
+
+
+read -p "Please enter the user name that you want to set up the Measurement Orchestrator for: " username
+read -p "Please enter the full path that you want to install this software into, e.g. /home/user/desire-measurement-orchestrator: " installPath
+
+echo "You entered: Username = $username | Installation Path = $installPath"
+read -p "If you want to proceed, please type yes. If not, please close the setup script or type no." yn
+case $yn in
+    yes ) echo "Proceeding with the setup.";;
+    no ) echo "Aborting.";
+         exit;;
+    * ) echo "Read neither yes nor no -  aborting...";
+        exit 1;;
+esac
+
+
+echo "Updating your system and installing prerequisites..."
+sleep 2
+sudo apt update
+sudo apt install -y python3.11-venv
+
+# Create install directory
+echo "Creating install directory at ${installPath} ..."
+mkdir -p $installPath
+
+# Copy files
+echo "Copying files..."
+cp Association.py ${installPath}
+cp measurementOrchestrator.py ${installPath}
+cp MeasurementPoint.py ${installPath}
+cp mo_config.json ${installPath}
+cp README.md ${installPath}
+
+
+# Setup python venv and install dependencies
+echo "Installing python venv at ${installPath}/venv-desire ..."
+python3 -m venv ${installPath}/venv-desire
+echo "Installing python dependencies..."
+sleep 2
+${installPath}/venv-desire/bin/pip3 install flask requests
+
+
+# Service installation
+## Measurement Client API Service
+pathToService="/etc/systemd/system/measurementOrchestrator.service"
+echo "Installing measurementOrchestrator.service at ${pathToService}..."
+touch $pathToService
+echo "[Unit]" >> $pathToService
+echo "Description=DeSiRe-NG Measurement Orchestrator" >> $pathToService
+echo "After=network.target" >> $pathToService
+echo "" >> $pathToService
+echo "[Service]" >> $pathToService
+echo "WorkingDirectory=${installPath}" >> $pathToService
+echo "Type=simple" >> $pathToService
+echo "ExecStartPre=/bin/sleep 10" >> $pathToService
+echo "ExecStart=${installPath}/venv-desire/bin/python3 ${installPath}/measurementOrchestrator.py" >> $pathToService
+echo "" >> $pathToService
+echo "[Install]" >> $pathToService
+echo "WantedBy=multi-user.target" >> $pathToService
+
+# Enable service
+echo "Enabling service..."
+sleep 2
+sudo systemctl daemon-reload
+sudo systemctl enable measurementOrchestrator.service
+sudo systemctl restart measurementOrchestrator.service 
+
+echo "Finished setup!"
